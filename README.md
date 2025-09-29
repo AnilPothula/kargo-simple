@@ -70,8 +70,27 @@ a path in a Git repository automatically (e.g. using auto-sync).
 
 7. Login to Kargo:
 
-   ```shell
-   kargo login --admin https://<kargo-url>
+   Install Kargo and login to your Kargo instance as an admin user
+   ```sh
+   # Generate a random password and signing key
+   pass=$(openssl rand -base64 48 | tr -d "=+/" | head -c 32)
+   echo "Password: $pass"
+   hashed_pass=$(htpasswd -bnBC 10 "" $pass | tr -d ':\n')
+   signing_key=$(openssl rand -base64 48 | tr -d "=+/" | head -c 32)
+
+   # Install Kargo with Helm
+   helm install kargo \
+   oci://ghcr.io/akuity/kargo-charts/kargo \
+   --namespace kargo \
+   --create-namespace \
+   --set-string api.adminAccount.passwordHash="$hashed_pass" \
+   --set-string api.adminAccount.tokenSigningKey="$signing_key" \
+   --set image.repository=ghcr.io/akuity/kargo \
+   --wait
+
+   # Forward the Kargo API port to localhost
+   kubectl port-forward -n kargo svc/kargo-api 8080:443
+   kargo login --admin https://localhost:8080 --insecure-skip-tls-verify --password $pass
    ```
 
 8. Apply the Kargo manifests:
@@ -84,6 +103,7 @@ a path in a Git repository automatically (e.g. using auto-sync).
    in the `kargo-simple` Project.
 
    ```shell
+   # When prompted for a token, use the GitHub Personal Access Token created earlier (GHCR_PAT)
    kargo create credentials github-creds \
      --project kargo-simple \
      --git \
