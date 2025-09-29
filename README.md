@@ -19,7 +19,7 @@ a path in a Git repository automatically (e.g. using auto-sync).
 
 * Kargo v1.3.x (for older Kargo versions, switch to the release-X.Y branch)
 * GitHub and a container registry (GHCR.io)
-* `git` and `docker` installed
+* `git` and `podman` installed
 
 ## Instructions
 
@@ -42,15 +42,16 @@ a path in a Git repository automatically (e.g. using auto-sync).
    pushing an existing image with your GitHub username:
 
    ```shell
-   docker login ghcr.io
+   # https://docs.github.com/en/packages/working-with-a-github-packages-registry/working-with-the-container-registry#authenticating-with-a-personal-access-token-classic
+   echo $GHCR_PAT | podman login ghcr.io -u <yourgithubusername> --password-stdin
 
-   docker buildx imagetools create \
-     ghcr.io/akuity/guestbook:latest \
-     -t ghcr.io/<yourgithubusername>/guestbook:v0.0.1
+   podman manifest create ghcr.io/<yourgithubusername>/guestbook:v0.0.1
+   podman manifest add ghcr.io/<yourgithubusername>/guestbook:v0.0.1 ghcr.io/akuity/guestbook:latest
+   podman manifest push ghcr.io/<yourgithubusername>/guestbook:v0.0.1
    ```
 
    You will now have a `guestbook` container image repository. e.g.:
-   https://github.com/yourgithubusername/guestbook/pkgs/container/guestbook
+   https://github.com/users/yourgithubusername/packages/container/package/guestbook
 
 5. Change guestbook container image repository to public.
 
@@ -64,7 +65,7 @@ a path in a Git repository automatically (e.g. using auto-sync).
 6. Download and install the latest CLI from [Kargo Releases](https://github.com/akuity/kargo/releases/latest)
 
    ```shell
-   ./download-cli.sh /usr/local/bin/kargo
+   sudo ./download-cli.sh /usr/local/bin/kargo
    ```
 
 7. Login to Kargo:
@@ -112,9 +113,9 @@ a path in a Git repository automatically (e.g. using auto-sync).
 To simulate a release, simply retag an image with a newer semantic version. e.g.:
 
 ```shell
-docker buildx imagetools create \
-  ghcr.io/akuity/guestbook:latest \
-  -t ghcr.io/<yourgithubusername>/guestbook:v0.0.2
+   podman manifest create ghcr.io/<yourgithubusername>/guestbook:v0.0.2
+   podman manifest add ghcr.io/<yourgithubusername>/guestbook:v0.0.2 ghcr.io/akuity/guestbook:latest
+   podman manifest push ghcr.io/<yourgithubusername>/guestbook:v0.0.2
 ```
 
 Then refresh the Warehouse in the UI to detect the new Freight.
